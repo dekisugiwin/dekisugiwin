@@ -1,0 +1,810 @@
+mixed-port: 7890
+redir-port: 7891
+tproxy-port: 1536
+ipv6: false
+mode: Rule
+allow-lan: true
+disable-keep-alive: false
+geodata-mode: false
+geo-auto-update: true
+geo-update-interval: 24
+updatetime: &Time 86400
+geox-url:
+  asn: "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb"
+experimental:
+  http-headers:
+    request:
+      - name: "User-Agent"
+        value: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36"
+      - name: "Accept-Language"
+        value: "en-US,en;q=0.9"
+unified-delay: true
+tcp-concurrent: true
+log-level: silent
+find-process-mode: always
+client-fingerprint: chrome
+external-controller: 0.0.0.0:9090
+external-ui-url: "https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip"
+external-ui: "./Web/Zash/"
+secret: ""
+p: &p
+  type: http
+  interval: *Time
+  health-check:
+    enable: true
+    url: http://www.google.com/generate_204
+    interval: 300
+  proxy: DIRECT
+  headers:
+    User-Agent: "FlClash/1.0.0 sing-box/1.10.0"
+    Accept: "*/*"
+A: &A
+  url: "https://www.gstatic.com/generate_204"
+  interval: 300
+  filter: "^(?!.*(套餐|重置|剩余|到期|群|账户|流量|有效期|失联|余额)).*$"
+  use:
+    - 1.主要地址
+    - 2.备用地址
+    - 3.额外地址
+All: &All
+  type: select
+  use:
+    - 1.主要地址
+    - 2.备用地址
+    - 3.额外地址
+P1_All: &P1_All
+  type: url-test
+  url: "https://www.gstatic.com/generate_204"
+  interval: 300
+  use:
+    - 1.主要地址
+P2_All: &P2_All
+  type: url-test
+  url: "https://www.gstatic.com/generate_204"
+  interval: 300
+  use:
+    - 2.备用地址
+P3_All: &P3_All
+  type: url-test
+  url: "https://www.gstatic.com/generate_204"
+  interval: 300
+  use:
+    - 3.额外地址
+proxy-providers:
+  1.主要地址:
+    hidden: true
+    <<: *p
+    override:
+      additional-prefix: "Main："
+    path: ./proxies/1.主要地址.yaml
+    url: ""
+  2.备用地址:
+    hidden: true
+    <<: *p
+    override:
+      additional-prefix: "Minor："
+    path: ./proxies/2.备用地址.yaml
+    url: ""
+  3.额外地址:
+    hidden: true
+    <<: *p
+    override:
+      additional-prefix: "Additi："
+    path: ./proxies/3.额外地址.yaml
+    url: ""
+profile:
+  store-selected: true
+  store-fake-ip: true
+sniffer:
+  enable: true
+  force-dns-mapping: true
+  parse-pure-ip: true
+  override-destination: true
+  sniff:
+    HTTP:
+      ports: [80, 8080-8880]
+    TLS:
+      ports: [443, 5228, 8443]
+    QUIC:
+      ports: [443, 8443]
+  force-domain:
+    - "+.v2ex.com"
+  skip-domain:
+    - "+.io.mi.com"
+tun:
+  enable: false
+  device: Meta
+  stack: gvisor
+  dns-hijack:
+    - any:53
+    - tcp://any:53
+  udp-timeout: 300
+  auto-route: true
+  auto-redirect: true
+  auto-detect-interface: true
+hosts:
+  services.googleapis.cn: services.googleapis.com
+dns:
+  enable: true
+  ipv6: false
+  listen: 0.0.0.0:1053
+  fake-ip-range: 198.18.0.0/16
+  enhanced-mode: fake-ip
+  fake-ip-filter:
+    - "+.lan"
+    - "+.local"
+    - "geosite:cn"
+    - "geosite:private"
+  proxy-server-nameserver:
+    - https://223.5.5.5/dns-query#🌐 本机·本地直连
+    - https://1.12.12.12/dns-query#🌐 本机·本地直连
+  nameserver-policy:
+    "geosite:cn,private":
+      - https://223.5.5.5/dns-query#🌐 本机·本地直连
+      - https://1.12.12.12/dns-query#🌐 本机·本地直连
+  nameserver:
+    - https://8.8.8.8/dns-query#DNS连接
+    - https://1.1.1.1/dns-query#DNS连接
+  direct-nameserver:
+    - 223.5.5.5
+    - 1.12.12.12
+proxies:
+  - { name: 🌐 本机·本地直连, type: direct, udp: true }
+  - { name: ⛔️ 禁止·拒绝连接, type: reject }
+  - { name: 🌐 DNS_Hijack, type: dns }
+proxy_groups: &proxy_groups
+  type: select
+  proxies:
+    - 总模式
+    - 延迟最低
+    - 负载均衡
+    - 故障转移
+    - 中国台湾
+    - 香港地区
+    - 美国地区
+    - 日本地区
+    - 狮城地区
+    - 其它地区
+    - ⛔️ 禁止·拒绝连接
+    - 🌐 本机·本地直连
+  <<: *A
+cn_proxy_groups: &cn_proxy_groups
+  type: select
+  proxies:
+    - 🌐 本机·本地直连
+    - 总模式
+    - 延迟最低
+    - 负载均衡
+    - 故障转移
+    - 中国台湾
+    - 香港地区
+    - 美国地区
+    - 日本地区
+    - 狮城地区
+    - 其它地区
+    - ⛔️ 禁止·拒绝连接
+  <<: *A
+proxy-groups:
+  - name: 总模式
+    icon: "https://api.iconify.design/icon-park-outline/all-application.svg?color=%233B82F6"
+    type: select
+    proxies:
+      - 福利节点
+      # - 主要-日本地区
+      # - 备用-日本地区
+      # - 额外-日本地区
+      # - 主要-中国台湾
+      # - 备用-中国台湾
+      # - 额外-中国台湾
+      # - 主要-香港地区
+      # - 备用-香港地区
+      # - 额外-香港地区
+      # - 主要-美国地区
+      # - 备用-美国地区
+      # - 额外-美国地区
+      # - 主要-狮城地区
+      # - 备用-狮城地区
+      # - 额外-狮城地区
+      # - 主要-其它地区
+      # - 备用-其它地区
+      # - 额外-其它地区
+      - 延迟最低
+      - 负载均衡
+      - 故障转移
+      - 日本地区
+      - 中国台湾
+      - 香港地区
+      - 美国地区
+      - 狮城地区
+      - 其它地区
+      - 🌐 本机·本地直连
+  - name: 订阅更新
+    icon: "https://api.iconify.design/ix/filter-update.svg?color=%2310B981"
+    <<: *cn_proxy_groups
+  - name: 小红书
+    icon: "https://api.iconify.design/arcticons/xiaohongshu-rednote.svg?color=%23FF2442"
+    <<: *cn_proxy_groups
+  - name: 抖音
+    icon: "https://api.iconify.design/streamline-flex/tiktok-solid.svg?color=%23FE2C55"
+    <<: *cn_proxy_groups
+  - name: BiliBili
+    icon: "https://api.iconify.design/streamline-logos/bilibili-logo-solid.svg?color=%23FB7299"
+    <<: *cn_proxy_groups
+  - name: 微博
+    icon: "https://api.iconify.design/streamline-logos/sina-weibo-logo-block.svg?color=%23E6162D"
+    <<: *cn_proxy_groups
+  - name: 微信
+    icon: "https://api.iconify.design/ic/baseline-wechat.svg?color=%2307C160"
+    <<: *cn_proxy_groups
+  - name: 百度
+    icon: "https://api.iconify.design/jam/baidu-square.svg?color=%232932E1"
+    <<: *cn_proxy_groups
+  - name: 淘宝
+    icon: "https://api.iconify.design/icon-park-outline/taobao.svg?color=%23FF4400"
+    <<: *cn_proxy_groups
+  - name: 拼多多
+    icon: "https://api.iconify.design/arcticons/pinduoduo.svg?color=%23E53935"
+    <<: *cn_proxy_groups
+  - name: 美团
+    icon: "https://api.iconify.design/simple-icons/meituan.svg?color=%23FFC300"
+    <<: *cn_proxy_groups
+  - name: 大众点评
+    icon: "https://api.iconify.design/arcticons/dianping.svg?color=%23FF6633"
+    <<: *cn_proxy_groups
+  - name: 京东
+    icon: "https://api.iconify.design/arcticons/jd-com.svg?color=%23E2231A"
+    <<: *cn_proxy_groups
+  - name: 知乎
+    icon: "https://api.iconify.design/ri/zhihu-fill.svg?color=%230084FF"
+    <<: *cn_proxy_groups
+  - name: 快手
+    icon: "https://api.iconify.design/simple-icons/kuaishou.svg?color=%23FF4000"
+    <<: *cn_proxy_groups
+  - name: 网易
+    icon: "https://api.iconify.design/mingcute/netease-music-fill.svg?color=%23E60012"
+    <<: *cn_proxy_groups
+  - name: 爱奇艺
+    icon: "https://api.iconify.design/arcticons/iqiyi.svg?color=%2300CC00"
+    <<: *cn_proxy_groups
+  - name: 支付宝
+    icon: "https://api.iconify.design/ri/alipay-fill.svg?color=%231677FF"
+    <<: *cn_proxy_groups
+  - name: QQ
+    icon: "https://api.iconify.design/mdi/qqchat.svg?color=%230052D9"
+    <<: *cn_proxy_groups
+  - name: 腾讯视频
+    icon: "https://api.iconify.design/streamline-logos/wetv-logo-block.svg?color=%2300A4FF"
+    <<: *cn_proxy_groups
+  - name: Steam
+    icon: "https://api.iconify.design/simple-icons/steam.svg?color=%2366C0F4"
+    <<: *proxy_groups
+  - name: Apple
+    icon: "https://api.iconify.design/streamline-logos/apple-logo-block.svg?color=%23CCCCCC"
+    <<: *proxy_groups
+  - name: Microsoft
+    icon: "https://api.iconify.design/ri/microsoft-fill.svg?color=%2300A4EF"
+    <<: *proxy_groups
+  - name: Telegram
+    icon: "https://api.iconify.design/ri/telegram-fill.svg?color=%2324A1DE"
+    <<: *proxy_groups
+  - name: Discord
+    icon: "https://api.iconify.design/ri/discord-fill.svg?color=%235865F2"
+    <<: *proxy_groups
+  - name: Spotify
+    icon: "https://api.iconify.design/ri/spotify-fill.svg?color=%231DB954"
+    <<: *proxy_groups
+  - name: TikTok
+    icon: "https://api.iconify.design/simple-icons/tiktok.svg?color=%2325F4EE"
+    <<: *proxy_groups
+  - name: YouTube
+    icon: "https://api.iconify.design/ri/youtube-fill.svg?color=%23FF0000"
+    <<: *proxy_groups
+  - name: Netflix
+    icon: "https://api.iconify.design/ri/netflix-fill.svg?color=%23E50914"
+    <<: *proxy_groups
+  - name: Google
+    icon: "https://api.iconify.design/material-icon-theme/google.svg?color=%234285F4"
+    <<: *proxy_groups
+  - name: GoogleFCM
+    icon: "https://api.iconify.design/entypo-social/google-hangouts.svg?color=%234285F4"
+    <<: *proxy_groups
+  - name: Facebook
+    icon: "https://api.iconify.design/ri/facebook-circle-fill.svg?color=%231877F2"
+    <<: *proxy_groups
+  - name: AI
+    icon: "https://api.iconify.design/ri/ai.svg?color=%231E90FF"
+    <<: *proxy_groups
+  - name: GitHub
+    icon: "https://api.iconify.design/ri/github-fill.svg?color=%238250DF"
+    <<: *proxy_groups
+  - name: Twitter(X)
+    icon: "https://api.iconify.design/ri/twitter-x-fill.svg?color=%231DA1F2"
+    <<: *proxy_groups
+  - name: DNS连接
+    icon: "https://api.iconify.design/ri/server-fill.svg?color=%238B5CF6"
+    <<: *proxy_groups
+  - name: 漏网之鱼
+    icon: "https://api.iconify.design/ix/water-fish.svg?color=%2364748B"
+    <<: *proxy_groups
+  - name: 广告拦截
+    icon: "https://api.iconify.design/mdi/ads-off.svg?color=%23FF0000"
+    type: select
+    proxies:
+      - PASS
+      - REJECT-DROP
+      - ⛔️ 禁止·拒绝连接
+      - 🌐 DNS_Hijack
+  - name: WebRTC
+    icon: "https://api.iconify.design/ri/broadcast-fill.svg?color=%23EC4899"
+    type: select
+    proxies:
+      - ⛔️ 禁止·拒绝连接
+      - 🌐 DNS_Hijack
+      - REJECT-DROP
+      - PASS
+  - name: 延迟最低
+    icon: "https://api.iconify.design/mdi/run-fast.svg?color=%23F59E0B"
+    type: url-test
+    <<: *A
+  - name: 负载均衡
+    icon: "https://api.iconify.design/carbon/load-balancer-global.svg?color=%2306B6D4"
+    type: load-balance
+    strategy: round-robin
+    <<: *A
+  - name: 故障转移
+    icon: "https://api.iconify.design/icon-park-outline/transfer.svg?color=%23EF4444"
+    type: fallback
+    <<: *A
+  - name: 主要-日本地区
+    hidden: true
+    icon: "https://api.iconify.design/circle-flags/jp.svg"
+    filter: "(?i)(日本|川日|东京|大阪|泉日|埼玉|沪日|深日|JP|Japan)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P1_All
+  - name: 备用-日本地区
+    hidden: true
+    icon: "https://api.iconify.design/circle-flags/jp.svg"
+    filter: "(?i)(日本|川日|东京|大阪|泉日|埼玉|沪日|深日|JP|Japan)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P2_All
+  - name: 额外-日本地区
+    hidden: true
+    icon: "https://api.iconify.design/circle-flags/jp.svg"
+    filter: "(?i)(日本|川日|东京|大阪|泉日|埼玉|沪日|深日|JP|Japan)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P3_All
+  - name: 主要-中国台湾
+    hidden: true
+    icon: "https://api.iconify.design/circle-flags/tw.svg"
+    filter: "(?i)(台|新北|彰化|TW|Taiwan|taipei)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P1_All
+  - name: 备用-中国台湾
+    hidden: true
+    icon: "https://api.iconify.design/circle-flags/tw.svg"
+    filter: "(?i)(台|新北|彰化|TW|Taiwan|taipei)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P2_All
+  - name: 额外-中国台湾
+    hidden: true
+    icon: "https://api.iconify.design/circle-flags/tw.svg"
+    filter: "(?i)(台|新北|彰化|TW|Taiwan|taipei)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P3_All
+  - name: 主要-香港地区
+    hidden: true
+    icon: "https://api.iconify.design/circle-flags/hk.svg"
+    filter: "(?i)(港|HK|Hong Kong|HongKong)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P1_All
+  - name: 备用-香港地区
+    hidden: true
+    icon: "https://api.iconify.design/circle-flags/hk.svg"
+    filter: "(?i)(港|HK|Hong Kong|HongKong)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P2_All
+  - name: 额外-香港地区
+    hidden: true
+    icon: "https://api.iconify.design/circle-flags/hk.svg"
+    filter: "(?i)(港|HK|Hong Kong|HongKong)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P3_All
+  - name: 主要-美国地区
+    hidden: true
+    icon: "https://api.iconify.design/circle-flags/us.svg"
+    filter: "(?i)(美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P1_All
+  - name: 备用-美国地区
+    hidden: true
+    icon: "https://api.iconify.design/circle-flags/us.svg"
+    filter: "(?i)(美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P2_All
+  - name: 额外-美国地区
+    hidden: true
+    icon: "https://api.iconify.design/circle-flags/us.svg"
+    filter: "(?i)(美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P3_All
+  - name: 主要-狮城地区
+    hidden: true
+    icon: "https://api.iconify.design/circle-flags/sg.svg"
+    filter: "(?i)(新加坡|坡|狮城|SG|Singapore)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P1_All
+  - name: 备用-狮城地区
+    hidden: true
+    icon: "https://api.iconify.design/circle-flags/sg.svg"
+    filter: "(?i)(新加坡|坡|狮城|SG|Singapore)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P2_All
+  - name: 额外-狮城地区
+    hidden: true
+    icon: "https://api.iconify.design/circle-flags/sg.svg"
+    filter: "(?i)(新加坡|坡|狮城|SG|Singapore)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P3_All
+  - name: 主要-其它地区
+    hidden: true
+    icon: "https://api.iconify.design/ion/earth.svg?color=%2322C55E"
+    filter: ".*"
+    exclude-filter: '(?i)(港|HK|Hong Kong|HongKong|日本|川日|东京|大阪|泉日|埼玉|沪日|深日|JP|Japan|美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States|台|新北|彰化|TW|Taiwan|taipei|新加坡|坡|狮城|SG|Singapore|灾|网易|Netease|套餐|重置|剩余|到期|订阅|群|账户|流量|有效期|时间|官网|拒绝|DNS|Ch|网址|售|防失|free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P1_All
+  - name: 备用-其它地区
+    hidden: true
+    icon: "https://api.iconify.design/ion/earth.svg?color=%2322C55E"
+    filter: ".*"
+    exclude-filter: '(?i)(港|HK|Hong Kong|HongKong|日本|川日|东京|大阪|泉日|埼玉|沪日|深日|JP|Japan|美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States|台|新北|彰化|TW|Taiwan|taipei|新加坡|坡|狮城|SG|Singapore|灾|网易|Netease|套餐|重置|剩余|到期|订阅|群|账户|流量|有效期|时间|官网|拒绝|DNS|Ch|网址|售|防失|free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P2_All
+  - name: 额外-其它地区
+    hidden: true
+    icon: "https://api.iconify.design/ion/earth.svg?color=%2322C55E"
+    filter: ".*"
+    exclude-filter: '(?i)(港|HK|Hong Kong|HongKong|日本|川日|东京|大阪|泉日|埼玉|沪日|深日|JP|Japan|美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States|台|新北|彰化|TW|Taiwan|taipei|新加坡|坡|狮城|SG|Singapore|灾|网易|Netease|套餐|重置|剩余|到期|订阅|群|账户|流量|有效期|时间|官网|拒绝|DNS|Ch|网址|售|防失|free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *P3_All
+  - name: 特殊地址
+    icon: "https://api.iconify.design/mingcute/warning-fill.svg?color=%23FF0000"
+    type: select
+    url: https://www.baidu.com/favicon.ico
+    interval: *Time
+    proxies:
+      - 🌐 本机·本地直连
+      - ⛔️ 禁止·拒绝连接
+  - name: 福利节点
+    icon: "https://api.iconify.design/icon-park-outline/gift.svg?color=%2310B981"
+    type: url-test
+    url: "https://www.gstatic.com/generate_204"
+    interval: 300
+    filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *All
+  - name: 日本地区
+    icon: "https://api.iconify.design/circle-flags/jp.svg"
+    filter: "(?i)(日本|川日|东京|大阪|泉日|埼玉|沪日|深日|JP|Japan)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *All
+  - name: 中国台湾
+    icon: "https://api.iconify.design/circle-flags/tw.svg"
+    filter: "(?i)(台|新北|彰化|TW|Taiwan|taipei)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *All
+  - name: 香港地区
+    icon: "https://api.iconify.design/circle-flags/hk.svg"
+    filter: "(?i)(港|HK|Hong Kong|HongKong)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *All
+  - name: 美国地区
+    icon: "https://api.iconify.design/circle-flags/us.svg"
+    filter: "(?i)(美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *All
+  - name: 狮城地区
+    icon: "https://api.iconify.design/circle-flags/sg.svg"
+    filter: "(?i)(新加坡|坡|狮城|SG|Singapore)"
+    exclude-filter: '(?i)(free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *All
+  - name: 其它地区
+    icon: "https://api.iconify.design/ion/earth.svg?color=%2322C55E"
+    filter: ".*"
+    exclude-filter: '(?i)(港|HK|Hong Kong|HongKong|日本|川日|东京|大阪|泉日|埼玉|沪日|深日|JP|Japan|美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States|台|新北|彰化|TW|Taiwan|taipei|新加坡|坡|狮城|SG|Singapore|灾|网易|Netease|套餐|重置|剩余|到期|订阅|群|账户|流量|有效期|时间|官网|拒绝|DNS|Ch|网址|售|防失|free|日用|免费|公益|0\.01|0\.2|0\.5)'
+    <<: *All
+rule-anchor:
+  Local: &Local { type: file, behavior: classical, format: text }
+  Classical:
+    &Classical {
+      type: http,
+      behavior: classical,
+      format: text,
+      interval: *Time,
+    }
+  IPCIDR: &IPCIDR { type: http, behavior: ipcidr, format: mrs, interval: *Time }
+  Domain: &Domain { type: http, behavior: domain, format: mrs, interval: *Time }
+rule-providers:
+  自定义规则:
+    <<: *Local
+    path: ./etc/自定义规则.list
+  WebRTC_端/域:
+    <<: *Classical
+    path: ./rules/WebRTC.list
+    url: "https://cdn.jsdelivr.net/gh/GitMetaio/dekisugi@main/box_bll/clash/rules/WebRTC.list"
+  CN_IP:
+    <<: *IPCIDR
+    path: ./rules/CN_IP.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/cn.mrs"
+  CN_域:
+    <<: *Domain
+    path: ./rules/CN_域.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/cn.mrs"
+  No-ads-all_域:
+    <<: *Domain
+    path: ./rules/No-ads-all.mrs
+    url: "https://cdn.jsdelivr.net/gh/TG-Twilight/AWAvenue-Ads-Rule@main/Filters/AWAvenue-Ads-Rule-Clash.mrs"
+  XiaoHongShu_域:
+    <<: *Domain
+    path: ./rules/XiaoHongShu.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/xiaohongshu.mrs"
+  DouYin_域:
+    <<: *Domain
+    path: ./rules/DouYin.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/douyin.mrs"
+  BiliBili_域:
+    <<: *Domain
+    path: ./rules/BiliBili.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/bilibili.mrs"
+  BiliBili_IP:
+    <<: *IPCIDR
+    path: ./rules/BiliBili_IP.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/bilibili.mrs"
+  Weibo_域:
+    <<: *Domain
+    path: ./rules/Sina.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/sina.mrs"
+  WeChat_域:
+    <<: *Domain
+    path: ./rules/Tencent.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/tencent.mrs"
+
+  Baidu_域:
+    <<: *Domain
+    path: ./rules/Baidu.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/baidu.mrs"
+  Taobao_域:
+    <<: *Domain
+    path: ./rules/Alibaba.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/alibaba.mrs"
+  Pinduoduo_域:
+    <<: *Domain
+    path: ./rules/Pinduoduo.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/pinduoduo.mrs"
+  Meituan_域:
+    <<: *Domain
+    path: ./rules/Meituan.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/meituan.mrs"
+  JD_域:
+    <<: *Domain
+    path: ./rules/JD.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/jd.mrs"
+  Zhihu_域:
+    <<: *Domain
+    path: ./rules/Zhihu.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/zhihu.mrs"
+  Kuaishou_域:
+    <<: *Domain
+    path: ./rules/Kuaishou.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/kuaishou.mrs"
+  NetEase_域:
+    <<: *Domain
+    path: ./rules/NetEase.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/netease.mrs"
+  iQIYI_域:
+    <<: *Domain
+    path: ./rules/iQIYI.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/iqiyi.mrs"
+  Alipay_域:
+    <<: *Domain
+    path: ./rules/Alibaba.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/alibaba.mrs"
+  Tencent_域:
+    <<: *Domain
+    path: ./rules/Tencent.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/tencent.mrs"
+  Steam_域:
+    <<: *Domain
+    path: ./rules/Steam.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/steam.mrs"
+  TikTok_域:
+    <<: *Domain
+    path: ./rules/TikTok.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/tiktok.mrs"
+  Spotify_域:
+    <<: *Domain
+    path: ./rules/Spotify.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/spotify.mrs"
+  Facebook_域:
+    <<: *Domain
+    path: ./rules/Facebook.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/facebook.mrs"
+  Facebook_IP:
+    <<: *IPCIDR
+    path: ./rules/Facebook_IP.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/facebook.mrs"
+  Telegram_域:
+    <<: *Domain
+    path: ./rules/Telegram.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/telegram.mrs"
+  Telegram_IP:
+    <<: *IPCIDR
+    path: ./rules/Telegram_IP.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/telegram.mrs"
+  YouTube_域:
+    <<: *Domain
+    path: ./rules/YouTube.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/youtube.mrs"
+  Google_域:
+    <<: *Domain
+    path: ./rules/Google.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/google.mrs"
+  Google_IP:
+    <<: *IPCIDR
+    path: ./rules/Google_IP.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/google.mrs"
+  GoogleFCM_域:
+    <<: *Domain
+    path: ./rules/GoogleFCM.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/googlefcm.mrs"
+  Microsoft_域:
+    <<: *Domain
+    path: ./rules/Microsoft.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/microsoft.mrs"
+  Apple_域:
+    <<: *Domain
+    path: ./rules/Apple.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/apple.mrs"
+  Apple_IP:
+    <<: *IPCIDR
+    path: ./rules/Apple_IP.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/apple.mrs"
+  AI_域:
+    <<: *Domain
+    path: ./rules/AI.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/ai.mrs"
+  AI_IP:
+    <<: *IPCIDR
+    path: ./rules/AI_IP.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/ai.mrs"
+  Netflix_域:
+    <<: *Domain
+    path: ./rules/Netflix.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/netflix.mrs"
+  Netflix_IP:
+    <<: *IPCIDR
+    path: ./rules/Netflix_IP.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/netflix.mrs"
+  Discord_域:
+    <<: *Domain
+    path: ./rules/Discord.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/discord.mrs"
+  GitHub_域:
+    <<: *Domain
+    path: ./rules/GitHub.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/github.mrs"
+  Twitter_域:
+    <<: *Domain
+    path: ./rules/Twitter.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/twitter.mrs"
+  Twitter_IP:
+    <<: *IPCIDR
+    path: ./rules/Twitter_IP.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/twitter.mrs"
+  Private_域:
+    <<: *Domain
+    path: ./rules/Private.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/private.mrs"
+  Private_IP:
+    <<: *IPCIDR
+    path: ./rules/Private_IP.mrs
+    url: "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo-lite/geoip/private.mrs"
+rules:
+  - AND,((NETWORK,udp),(DST-PORT,443)),REJECT
+  - DST-PORT,53,🌐 DNS_Hijack
+  - DST-PORT,853,DNS连接
+  - DOMAIN-SUFFIX,myqnapcloud.com,🌐 本机·本地直连
+  - DOMAIN-SUFFIX,myqnapcloud.io,🌐 本机·本地直连
+  - RULE-SET,自定义规则,特殊地址
+  - DOMAIN-SUFFIX,huggingface.co,总模式
+  - DOMAIN-SUFFIX,hf.co,总模式
+  - DOMAIN,alkali-pa.googleapis.com,AI
+  - DOMAIN,proactivebackend-pa.googleapis.com,AI
+  - DOMAIN,optimizationguide-pa.googleapis.com,AI
+  - DOMAIN-SUFFIX,aisandbox-pa.googleapis.com,AI
+  - DOMAIN-SUFFIX,generativelanguage.googleapis.com,AI
+  - DOMAIN-SUFFIX,bard.google.com,AI
+  - DOMAIN-SUFFIX,ai.google.dev,AI
+  - DOMAIN-SUFFIX,aistudio.google.com,AI
+  - DOMAIN-KEYWORD,gemini,AI
+  - DOMAIN-SUFFIX,aiplatform.googleapis.com,AI
+  - DOMAIN-SUFFIX,makersuite.google.com,AI
+  - DOMAIN,oauth2.googleapis.com,AI
+  - DOMAIN,accounts.google.com,AI
+  - DOMAIN-SUFFIX,antigravity-unleash.goog,AI
+  - DOMAIN-KEYWORD,cloudcode-pa,AI
+  - DOMAIN,www.googleapis.com,AI
+  - DOMAIN,clients4.google.com,AI
+  - DOMAIN,mtalk.google.com,AI
+  - DOMAIN,play.googleapis.com,AI
+  - DOMAIN,lh3.googleusercontent.com,AI
+  - DOMAIN,oauthaccountmanager.googleapis.com,AI
+  - RULE-SET,WebRTC_端/域,WebRTC
+  - RULE-SET,No-ads-all_域,广告拦截
+  - PROCESS-NAME,com.ss.android.ugc.aweme,抖音
+  - RULE-SET,DouYin_域,抖音
+  - PROCESS-NAME,com.xingin.xhs,小红书
+  - RULE-SET,XiaoHongShu_域,小红书
+  - PROCESS-NAME,tv.danmaku.bili,BiliBili
+  - RULE-SET,BiliBili_域,BiliBili
+  - RULE-SET,BiliBili_IP,BiliBili,no-resolve
+  - PROCESS-NAME,com.sina.weibo,微博
+  - RULE-SET,Weibo_域,微博
+  - PROCESS-NAME,com.tencent.mm,微信
+  - RULE-SET,WeChat_域,微信
+  - PROCESS-NAME,com.baidu.BaiduMap,百度
+  - PROCESS-NAME,com.baidu.searchbox,百度
+  - RULE-SET,Baidu_域,百度
+  - PROCESS-NAME,com.taobao.taobao,淘宝
+  - RULE-SET,Taobao_域,淘宝
+  - PROCESS-NAME,com.xunmeng.pinduoduo,拼多多
+  - RULE-SET,Pinduoduo_域,拼多多
+  - PROCESS-NAME,com.sankuai.meituan,美团
+  - PROCESS-NAME,com.sankuai.meituan.takeoutnew,美团
+  - PROCESS-NAME,com.dianping.v1,大众点评
+  - RULE-SET,Meituan_域,美团
+  - PROCESS-NAME,com.jingdong.app.mall,京东
+  - RULE-SET,JD_域,京东
+  - PROCESS-NAME,com.zhihu.android,知乎
+  - RULE-SET,Zhihu_域,知乎
+  - PROCESS-NAME,com.smile.gifmaker,快手
+  - RULE-SET,Kuaishou_域,快手
+  - PROCESS-NAME,com.netease.cloudmusic,网易
+  - RULE-SET,NetEase_域,网易
+  - PROCESS-NAME,com.qiyi.video,爱奇艺
+  - RULE-SET,iQIYI_域,爱奇艺
+  - PROCESS-NAME,com.eg.android.AlipayGphone,支付宝
+  - RULE-SET,Alipay_域,支付宝
+  - PROCESS-NAME,com.tencent.mobileqq,QQ
+  - PROCESS-NAME,com.tencent.qqlive,腾讯视频
+  - RULE-SET,Tencent_域,腾讯视频
+  - RULE-SET,Steam_域,Steam
+  - RULE-SET,GitHub_域,GitHub
+  - RULE-SET,Discord_域,Discord
+  - RULE-SET,TikTok_域,TikTok
+  - RULE-SET,Twitter_域,Twitter(X)
+  - RULE-SET,Twitter_IP,Twitter(X),no-resolve
+  - RULE-SET,YouTube_域,YouTube
+  - DOMAIN-SUFFIX,google.cn,Google
+  - RULE-SET,GoogleFCM_域,GoogleFCM
+  - RULE-SET,Google_域,Google
+  - RULE-SET,Google_IP,Google,no-resolve
+  - RULE-SET,Netflix_域,Netflix
+  - RULE-SET,Netflix_IP,Netflix,no-resolve
+  - RULE-SET,Spotify_域,Spotify
+  - RULE-SET,Facebook_域,Facebook
+  - RULE-SET,Facebook_IP,Facebook,no-resolve
+  - RULE-SET,AI_域,AI
+  - RULE-SET,AI_IP,AI,no-resolve
+  - RULE-SET,Apple_域,Apple
+  - RULE-SET,Apple_IP,Apple,no-resolve
+  - RULE-SET,Microsoft_域,Microsoft
+  - RULE-SET,Telegram_域,Telegram
+  - RULE-SET,Telegram_IP,Telegram,no-resolve
+  - RULE-SET,Private_域,🌐 本机·本地直连
+  - RULE-SET,Private_IP,🌐 本机·本地直连,no-resolve
+  - RULE-SET,CN_域,🌐 本机·本地直连
+  - RULE-SET,CN_IP,🌐 本机·本地直连
+  - MATCH,漏网之鱼
+
+
+
+
+
+
+
