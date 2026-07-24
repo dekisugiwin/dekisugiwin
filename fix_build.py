@@ -411,6 +411,8 @@ $origContent = $origContent -replace '(?m)\$BtnUwpDisable\.Add_Click\(\{.*?\}\)'
     try { [System.Diagnostics.Process]::Start(`$startInfo) | Out-Null } catch {}
 })"
 
+$finalCode = $psCode + "`n`n" + $origContent
+
 # 1.5 Minify PS code (remove comments and empty lines)
 $finalCode = $finalCode -replace '(?m)^\s*#.*$', ''
 $finalCode = $finalCode -replace '(?m)\r?\n\s*\r?\n', "`n"
