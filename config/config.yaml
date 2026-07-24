@@ -134,12 +134,11 @@ dns:
     - "+.lan"
     - "+.local"
     - "geosite:cn"
-    - "geosite:private"
   proxy-server-nameserver:
     - https://223.5.5.5/dns-query#🌐 本机·本地直连
     - https://1.12.12.12/dns-query#🌐 本机·本地直连
   nameserver-policy:
-    "geosite:cn,private":
+    "geosite:cn":
       - https://223.5.5.5/dns-query#🌐 本机·本地直连
       - https://1.12.12.12/dns-query#🌐 本机·本地直连
   nameserver:

@@ -1,0 +1,7 @@
+time="2026-07-24T16:53:36.615935000+08:00" level=info msg="Start initial configuration in progress"
+time="2026-07-24T16:53:36.619981700+08:00" level=info msg="Geodata Loader mode: memconservative"
+time="2026-07-24T16:53:36.620498500+08:00" level=info msg="Geosite Matcher implementation: succinct"
+time="2026-07-24T16:53:36.622125900+08:00" level=info msg="Load GeoSite rule: cn"
+time="2026-07-24T16:53:36.817695300+08:00" level=info msg="Finished initial GeoSite rule cn => dns.nameserver-policy, records: 111868"
+time="2026-07-24T16:53:36.818696900+08:00" level=info msg="Finished initial GeoSite rule cn => dns.fake-ip-filter, records: 111868"
+time="2026-07-24T16:53:36.818696900+08:00" level=info msg="Initial configuration complete, total time: 202ms"
